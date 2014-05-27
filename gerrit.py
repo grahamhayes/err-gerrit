@@ -38,7 +38,7 @@ class Gerrit(BotPlugin):
             if event:
                 yield ("Event: %s", event)
             else:
-                time.sleep(1)
+                time.sleep(2)
 
     # Passing split_args_with=None will cause arguments to be split on any kind
     # of whitespace, just like Python's split() does
