@@ -2,7 +2,7 @@
 
 from errbot import BotPlugin, botcmd
 from pygerrit.client import GerritClient
-import time
+import logging
 
 
 class Gerrit(BotPlugin):
@@ -15,30 +15,31 @@ class Gerrit(BotPlugin):
 
         You should delete it if you're not using it to
         override any default behaviour"""
-        super(Gerrit, self).activate()
+
         self.client = GerritClient("gerritssh")
+        self.client.gerrit_version()
         self.client.start_event_stream()
+        self.start_poller(2, self._poll_event)
+        super(Gerrit, self).activate()
 
     def deactivate(self):
         """Triggers on plugin deactivation
 
         You should delete it if you're not using it to
         override any default behaviour"""
-        super(Gerrit, self).deactivate()
+        logging.warn('Calling Stop Poller')
+        self.stop_poller(self._poll_event)
+        logging.warn('Calling Stop event stream')
         self.client.stop_event_stream()
+        logging.warn('Calling super deavtivate')
+        super(Gerrit, self).deactivate()
 
-    def callback_connect(self):
-        """Triggers when bot is connected
-
-        You should delete it if you're not using it to
-        override any default behaviour"""
-
-        while True:
-            event = self.client.get_event()
-            if event:
-                yield ("Event: %s", event)
-            else:
-                time.sleep(2)
+    def _poll_event(self):
+        logging.warn('Starting to listen for event')
+        event = self.client.get_event(block=True, timeout=1)
+        if event:
+            self.send('#mugsie-test', 'Got an Event', message_type='groupchat')
+        logging.warn('Stopped listening for event')
 
     # Passing split_args_with=None will cause arguments to be split on any kind
     # of whitespace, just like Python's split() does
